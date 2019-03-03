@@ -19,10 +19,12 @@ def build_matrix_poisson(M, break_mode=False):
     b = np.full((4*M+1, 4*M+1), -4)
     Y = np.zeros((4*M+1, 4*M+1))
     u = []
+    coords = []
     for i in range(0, 4*M+1):
         for j in range(0, 4*M+1):
             x = -1 + i / (2*M)
             y = -1 + j / (2*M)
+            coords.append((x, y))
             A = np.zeros((4*M+1, 4*M+1), dtype=np.float32)
             if (x ** 2 + y ** 2 <= 1):
                 A[i, j] = 4
@@ -62,7 +64,7 @@ def build_matrix_poisson(M, break_mode=False):
     #Y = np.delete(Y, rm_idx, axis=0)
     #b = np.delete(b, rm_idx, axis=0)
 
-    return u, b.ravel(), Y.ravel()
+    return u, b.ravel(), Y.ravel(), coords
 
 def print_matrix(A, B):
     print("shape", np.array(A).shape)
@@ -138,7 +140,7 @@ def cg(A, b, tol):
             break
     return x, it
 
-def conjugate_grad(A, b, x=None):
+def cg2(A, b, x=None):
     n = len(b)
     if not x:
         x = np.ones(n)
@@ -168,20 +170,27 @@ def main(argv):
     str1 = list(map(float, f1[0].split(' ')))
     eps = int(str1[0])
     error = 0
-    for M in range(2, 5):
-        A, B, Y = build_matrix_poisson(M)
+    for M in range(1, 8):
+        A, B, Y, coords = build_matrix_poisson(M)
         #print("y", Y)
-        x = conjugate_grad(A, B)
+        x = cg2(A, B)
         conv = converged(x, Y, eps)
         print("M: {}, error: {}".format(M, conv[1]))
         if conv[0]:
             print(conv[1])
             break
-    print(M)
-    print(x)
-    print(Y)
+    #print(M)
+    #print(x)
+    #print(Y)
     #print(n_iter)
-    #f2.write(str(x)[1:-1])
+    print(x)
+    it = 0
+    for c, u in zip(coords, x):
+        f2.write(str(c[0]) + " " + str(c[1]) + " " + str(u)+" ")
+        if ((it % 4*M) == 0) and (it > 0):
+            f2.write("\n")
+        it += 1
+
 
 def test_iteration_method():
     b = np.array([list(map(float, "3.5649494 3.5185026 3.4714836 3.4239174 3.3758356 3.3272777 3.2782924 3.2289386 3.1792869 3.1294215 3.0794415".split(" "))),
