@@ -14,6 +14,44 @@ def converged(Y_hat, Y, eps):
     conv =  error <= eps
     return conv, error
 
+def build_matrix_poisson_polar(M, break_mode=False):
+    b = np.full((2*M+1, 2*M+1), -4)
+    Y = np.zeros((2*M+1, 2*M+1))
+    u = []
+    coords = []
+    for i in range(0, 2*M+1):
+        for j in range(0, 2*M+1):
+            r = i / (2*M)
+            phi = 2. * np.pi / (2*M) * j
+
+            x = r * np.cos(phi)
+            y = r * np.sin(phi)
+            coords.append((x, y))
+            A = np.zeros((2*M+1, 2*M+1), dtype=np.float32)
+            if (x ** 2 + y ** 2 <= 1):
+                A[i, j] = 4
+                y_1 = r*np.sin(2. * np.pi / (2*M) * (j-1))
+
+                if j > 0 and y_1**2+x**2<=1:
+                    A[i, j - 1] = -1
+                y_2 = r*np.sin(2. * np.pi / (2*M) * (j+1))
+                if j < 2*M and y_2**2+x**2<=1:
+                    A[i, j + 1] = -1
+                x_1 = ((i - 1) / (2*M))*np.cos(phi)
+                if i > 0 and x_1**2+y**2<=1:
+                    A[i - 1, j] = -1
+                x_2 = ((i + 1) / (2*M))*np.cos(phi)
+                if i < 2*(M-1) and x_2**2+y**2<=1:
+                    A[i + 1, j] = -1
+                Y[i, j] = 1 - (x ** 2 + y ** 2)
+            else:
+                b[i, j] = 0
+                #TODO fill b vector
+            u_line = A.ravel()  # M^2
+            #u[(2*M+1)*i+j, :] = u_line
+            u.append(u_line)
+    return u, b.ravel(), Y.ravel(), coords
+
 def build_matrix_poisson(M, break_mode=False):
     u = np.zeros(((4*M+1)**2, (4*M+1)**2))
     b = np.full((4*M+1, 4*M+1), -4)
@@ -47,22 +85,6 @@ def build_matrix_poisson(M, break_mode=False):
             u_line = A.ravel()  # M^2
             #u[(2*M+1)*i+j, :] = u_line
             u.append(u_line)
-            #x = -1+i/M
-            #y = -1+j/M
-            #x = i/(2*M)
-            #y = j/(2*M)
-            #Y[i, j] = 1 - (x ** 2 + y ** 2)
-    #u = np.array(u)
-    #b = np.array(b)
-
-    #inds = np.all(u == 0, axis=1)
-    #rm_idx = list(compress(range(0, u.shape[0]), inds))
-    #u = np.delete(u, rm_idx, axis=1)
-    #u = u[~np.all(u == 0, axis=1)]
-    #b = b.ravel()
-    #Y = Y.ravel()
-    #Y = np.delete(Y, rm_idx, axis=0)
-    #b = np.delete(b, rm_idx, axis=0)
 
     return u, b.ravel(), Y.ravel(), coords
 
@@ -171,6 +193,7 @@ def main(argv):
     eps = int(str1[0])
     error = 0
     for M in range(1, 8):
+        #A, B, Y, coords = build_matrix_poisson_polar(M)
         A, B, Y, coords = build_matrix_poisson(M)
         #print("y", Y)
         x = cg2(A, B)
@@ -179,11 +202,6 @@ def main(argv):
         if conv[0]:
             print(conv[1])
             break
-    #print(M)
-    #print(x)
-    #print(Y)
-    #print(n_iter)
-    print(x)
     it = 0
     for c, u in zip(coords, x):
         f2.write(str(c[0]) + " " + str(c[1]) + " " + str(u)+" ")
@@ -199,9 +217,6 @@ def test_iteration_method():
          list(map(float, "3.0794415 3.0294632 2.9796212 2.9300711 2.8809906 2.8325815 2.7850705 2.7387102 2.6937791 2.6505799 2.6094379".split(" ")))])
     A, B = build_matrix_laplacce(b, len("3.5649494 3.5185026 3.4714836 3.4239174 3.3758356 3.3272777 3.2782924 3.2289386 3.1792869 3.1294215 3.0794415".split(" ")))
     u, n_iter = cg(A, B, 0.0000001)
-    print(u)
-    print(n_iter)
-    #print(n_iter)
 
 if __name__=="__main__":
 
