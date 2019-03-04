@@ -203,6 +203,7 @@ def main(argv):
             print(conv[1])
             break
     it = 0
+    f2.write(str(M)+" ")
     for c, u in zip(coords, x):
         f2.write(str(c[0]) + " " + str(c[1]) + " " + str(u)+" ")
         if ((it % 4*M) == 0) and (it > 0):
