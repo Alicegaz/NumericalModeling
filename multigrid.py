@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import sys
-from NumericalModeling.scripts.multigrid_solver import *
+from scripts.multigrid_solver import *
 
 def main(argv):
     f2 = open(argv[1], "w")
