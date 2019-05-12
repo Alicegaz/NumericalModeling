@@ -7,7 +7,6 @@ def dydt(x, t, beta):
     return beta*(x - 3*t - math.sin(t))
 
 def c(ws, w, k):
-    print(w, ws[k])
     c = 1
     for idx, w_i in enumerate(ws):
         if ws[k]!=w_i:
@@ -15,22 +14,22 @@ def c(ws, w, k):
     return c
 
 def dxdt(y, t, dt, zs, ts, ws, ro, M, T, num_M):
-    dt = ts[1] - ts[0]
     g1_2 = 0
-    dw = M/num_M
+    dw = float(float(M)/float(num_M))
     for k in range(len(ro)):
         # TODO determine M
-        w = []
-        w.append(y)
+        w = float(y)
         g1_1 = 0
-        for j in range(1, M):
-            w.append(w[j-1] + dw)
-            if w[j] >= y and j<=1:
+        ###########print(num_M, w, dw)
+        for j in range(1, int(num_M)):
+            prev = w
+            w+= dw
+            if w >= y and j<=1:
                 # TODO is it ok to start from j = 1
-                ws_t = [w for w in ws if w >= y]
-                g1_1 += c(ws_t, (w[j - 1] + w[j]) / 2, k) * (w[j] - w[j - 1]) * ro[k]
+                ws_t = [bb for bb in ws if bb >= y]
+                g1_1 += c(ws_t, (prev + w) / 2, k) * (w - prev) * ro[k]
         g1_2 += g1_1
-
+    #print(w)
     g2_1 = 0
     g2_2 = 0
     for k in range(len(zs)):
@@ -65,29 +64,28 @@ def rungeKutta(x0, y0, T, M, beta, n, k, ws, ro, ts, zs, num_M):
     #number of iterations using step size
     #n = (int)((x-x0)/h)
     n = int(n)
-    M = int(M)
     T = int(T)
     k = int(k)
     Y =  []
     X = []
-    X.append(x0)
-    Y.append(y0)
+    X.append(float(x0))
+    Y.append(float(y0))
     #TODO: check if all t and dt are the same for different functions
     #TODO: precalculate dt
     #TODO: determine the length of ts
-    t0 = 0
-    dt = int(T/n)
-    t = 0
+    t0 = 0.0
+    dt = float(float(T)/float(n))
+    t = t0
     times = []
-    times.append(t0)
+    times.append(float(t0))
     for i in range(1, n+1):
         #TODO: implement runge kutta scheme
         #y = dydt(X[i-1], t, beta)
-        y_i = Y[i-1]+1/6*update_y(dydt, t, X[i-1], dt, beta)
-        Y.append(y_i)
+        y_i = Y[i-1]+update_y(dydt, t, X[i-1], dt, beta)/6
+        Y.append(update_y(dydt, t, X[i-1], dt, beta))
         #x = dxdt(M, y, T, t, dt, zs, ts, ws, ro)
         #t, y, dt, zs, ts, ws, ro, M, T
-        x_i = X[i-1]+1/6*update_x(dxdt, t, Y[i-1], dt, zs, ts, ws, ro, M, T, num_M)
+        x_i = X[i-1]+update_x(dxdt, t, Y[i-1], dt, zs, ts, ws, ro, M, T, num_M)/6
         X.append(x_i)
         t+=dt
         times.append(t)
@@ -107,7 +105,6 @@ def loss(X, T, eps):
 #def dloss():
 
 def main(argv):
-    print("jskj")
     f = open(argv[0], "r")
     f2 = open(argv[1], "w")
     #print(argv[0], argv[1])
